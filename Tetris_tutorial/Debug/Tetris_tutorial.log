@@ -1,0 +1,6 @@
+﻿  main.c
+C:\Users\dowkk\source\repos\Tetris_tutorial\Tetris_tutorial\main.c(61,12): warning C4013: '_kbhit'이(가) 정의되지 않았습니다. extern은 int형을 반환하는 것으로 간주합니다.
+C:\Users\dowkk\source\repos\Tetris_tutorial\Tetris_tutorial\main.c(62,15): warning C4013: '_getch'이(가) 정의되지 않았습니다. extern은 int형을 반환하는 것으로 간주합니다.
+C:\Users\dowkk\source\repos\Tetris_tutorial\Tetris_tutorial\main.c(148,9): warning C4101: 'j' :참조되지 않은 지역 변수입니다.
+C:\Users\dowkk\source\repos\Tetris_tutorial\Tetris_tutorial\main.c(148,6): warning C4101: 'i' :참조되지 않은 지역 변수입니다.
+  Tetris_tutorial.vcxproj -> C:\Users\dowkk\source\repos\Tetris_tutorial\Debug\Tetris_tutorial.exe
