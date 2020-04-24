@@ -31,22 +31,51 @@ int bx;
 int by;
 
 int game_map[MAX_Y][MAX_X];
+int game_map_copy[MAX_Y][MAX_X];
 char key;
+int b_type;
+int b_rotation;
+
+int blocks[7][4][4][4] = {
+{{0,0,0,0,0,2,2,0,0,2,2,0,0,0,0,0},{0,0,0,0,0,2,2,0,0,2,2,0,0,0,0,0},
+{0,0,0,0,0,2,2,0,0,2,2,0,0,0,0,0},{0,0,0,0,0,2,2,0,0,2,2,0,0,0,0,0}},
+{{0,0,0,0,0,0,0,0,2,2,2,2,0,0,0,0},{0,2,0,0,0,2,0,0,0,2,0,0,0,2,0,0},
+ {0,0,0,0,0,0,0,0,2,2,2,2,0,0,0,0},{0,2,0,0,0,2,0,0,0,2,0,0,0,2,0,0}},
+{{0,0,0,0,2,2,0,0,0,2,2,0,0,0,0,0},{0,0,0,0,0,0,2,0,0,2,2,0,0,2,0,0},
+ {0,0,0,0,2,2,0,0,0,2,2,0,0,0,0,0},{0,0,0,0,0,0,2,0,0,2,2,0,0,2,0,0}},
+{{0,0,0,0,0,2,2,0,2,2,0,0,0,0,0,0},{0,0,0,0,2,0,0,0,2,2,0,0,0,2,0,0},
+ {0,0,0,0,0,2,2,0,2,2,0,0,0,0,0,0},{0,0,0,0,2,0,0,0,2,2,0,0,0,2,0,0}},
+{{0,0,0,0,0,0,2,0,2,2,2,0,0,0,0,0},{0,0,0,0,2,2,0,0,0,2,0,0,0,2,0,0},
+ {0,0,0,0,0,0,0,0,2,2,2,0,2,0,0,0},{0,0,0,0,0,2,0,0,0,2,0,0,0,2,2,0}},
+{{0,0,0,0,2,0,0,0,2,2,2,0,0,0,0,0},{0,0,0,0,0,2,0,0,0,2,0,0,2,2,0,0},
+ {0,0,0,0,0,0,0,0,2,2,2,0,0,0,2,0},{0,0,0,0,0,2,2,0,0,2,0,0,0,2,0,0}},
+{{0,0,0,0,0,2,0,0,2,2,2,0,0,0,0,0},{0,0,0,0,0,2,0,0,0,2,2,0,0,2,0,0},
+ {0,0,0,0,0,0,0,0,2,2,2,0,0,2,0,0},{0,0,0,0,0,2,0,0,2,2,0,0,0,2,0,0}}
+}; //블록모양 저장 4*4공간에 블록을 표현 blcoks[b_type][b_rotation][i][j]로 사용
 
 void check_key(void);
 void reset_map(void);
 void draw_map(void);
 void new_block(void);
 void move_block(int);
+int check_crush(int, int, int);
 
 void gotoxy(int x, int y) {
 	COORD pos = { 2 * x, y };
 	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
 }
 
+void hidecursor() {
+	CONSOLE_CURSOR_INFO info;
+	info.dwSize = 1;
+	info.bVisible = FALSE;
+	SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
+}
+
 int main(void) {
 	char key=0;
-	
+	system("cls");
+	hidecursor();
 	reset_map();
 	new_block();
 	draw_map();
@@ -63,19 +92,27 @@ void check_key() {
 		switch (key)
 		{
 		case UP:
-			move_block(UP);
+			if (check_crush(bx, by - 1, b_rotation) == 1) {
+				move_block(UP);
+			}
 			break;
 		case DOWN:
-			move_block(DOWN);
+			if (check_crush(bx, by + 1, b_rotation) == 1) {
+				move_block(DOWN);
+			}
 			break;
 		case RIGHT:
-			move_block(RIGHT);
+			if (check_crush(bx + 1, by, b_rotation) == 1) {
+				move_block(RIGHT);
+			}
 			break;
 		case LEFT:
-			move_block(LEFT);
+			if (check_crush(bx - 1, by, b_rotation) == 1) {
+				move_block(LEFT);
+			}
 			break;
 		case SPACE:
-			move_block(SPACE);
+			
 			break;
 		default:
 			break;
@@ -108,40 +145,53 @@ void reset_map(void) {
 
 void draw_map() {
 	int i, j;
-	system("cls");
 	for (i = 0; i < MAX_Y; i++) {
 		for (j = 0; j < MAX_X; j++) {
-			gotoxy(j, i);
-			switch (game_map[i][j])
-			{
-			case EMPTY:
-				printf("  ");
-				break;
-			case WALL:
-				printf("▩");
-				break;
-			case BLOCK:
-				printf("■");
-				break;
-			default:
-				break;
+			if (game_map_copy[i][j] != game_map[i][j]) {
+				gotoxy(j, i);
+				switch (game_map[i][j])
+				{
+				case EMPTY:
+					printf("  ");
+					break;
+				case WALL:
+					printf("▩");
+					break;
+				case BLOCK:
+					printf("■");
+					break;
+				default:
+					break;
+				}
 			}
-
 		}
 	}
-
+	for (i = 0; i < MAX_Y; i++) {
+		for (j = 0; j < MAX_X; j++) {
+			game_map_copy[i][j] = game_map[i][j];
+		}
+	}
 }
 void new_block() {
 	int i, j;
 
-	bx = (MIN_X + MAX_X) / 2;
-	by = (MIN_Y + MAX_Y) / 2;
+	bx = (MIN_X + MAX_X) / 2 - 2;
+	by = (MIN_Y + MAX_Y) / 2 - 2;
 
-	for (i = 0; i < 2; i++) {
-		for (j = 0; j < 2; j++) {
-			game_map[by + j][bx + i] = BLOCK;
+	b_type = 4;
+	b_rotation = 2;
+	
+
+	for (i = 0; i < 4; i++) {
+			for (j = 0; j < 4; j++) {
+				if (game_map[by + j][bx + i] == EMPTY 
+					&& blocks[b_type][b_rotation][j][i] == BLOCK) {
+					game_map[by + j][bx + i] = BLOCK;
+				}
+			}
 		}
-	}
+	
+	
 }
 
 void move_block(int dir) {
@@ -149,32 +199,86 @@ void move_block(int dir) {
 
 	switch (dir) {
 	case LEFT:
-		game_map[by][bx - 1] = BLOCK;
-		game_map[by + 1][bx - 1] = BLOCK;
-		game_map[by][bx + 1] = EMPTY;
-		game_map[by + 1][bx + 1] = EMPTY;
+		for (i = 0; i < 4; i++) {
+			for (j = 0; j < 4; j++) {
+				if (game_map[by + j][bx + i] != WALL) {
+					game_map[by + j][bx + i] = EMPTY;
+				}
+			}
+		}
 		bx--;
+		for (i = 0; i < 4; i++) {
+			for (j = 0; j < 4; j++) {
+				if (game_map[by + j][bx + i] == EMPTY
+					&& blocks[b_type][b_rotation][j][i] == BLOCK) {
+					game_map[by + j][bx + i] = BLOCK;
+				}
+			}
+		}
 		break;
 	case RIGHT:
-		game_map[by][bx + 2] = BLOCK;
-		game_map[by + 1][bx + 2] = BLOCK;
-		game_map[by][bx] = EMPTY;
-		game_map[by + 1][bx] = EMPTY;
+		for (i = 0; i < 4; i++) {
+			for (j = 0; j < 4; j++) {
+				if (game_map[by + j][bx + i] != WALL) {
+					game_map[by + j][bx + i] = EMPTY;
+				}
+			}
+		}
 		bx++;
+		for (i = 0; i < 4; i++) {
+			for (j = 0; j < 4; j++) {
+				if (game_map[by + j][bx + i] == EMPTY
+					&& blocks[b_type][b_rotation][j][i] == BLOCK) {
+					game_map[by + j][bx + i] = BLOCK;
+				}
+			}
+		}
 		break;
 	case UP:
-		game_map[by - 1][bx] = BLOCK;
-		game_map[by - 1][bx + 1] = BLOCK;
-		game_map[by + 1][bx] = EMPTY;
-		game_map[by + 1][bx + 1] = EMPTY;
+		for (i = 0; i < 4; i++) {
+			for (j = 0; j < 4; j++) {
+				if (game_map[by + j][bx + i] != WALL) {
+					game_map[by + j][bx + i] = EMPTY;
+				}
+			}
+		}
 		by--;
+		for (i = 0; i < 4; i++) {
+			for (j = 0; j < 4; j++) {
+				if (game_map[by + j][bx + i] == EMPTY
+					&& blocks[b_type][b_rotation][j][i] == BLOCK) {
+					game_map[by + j][bx + i] = BLOCK;
+				}
+			}
+		}
 		break;
 	case DOWN:
-		game_map[by + 2][bx] = BLOCK;
-		game_map[by + 2][bx + 1] = BLOCK;
-		game_map[by][bx] = EMPTY;
-		game_map[by][bx + 1] = EMPTY;
+		for (i = 0; i < 4; i++) {
+			for (j = 0; j < 4; j++) {
+				if (game_map[by + j][bx + i] != WALL) {
+					game_map[by + j][bx + i] = EMPTY;
+				}
+			}
+		}
 		by++;
+		for (i = 0; i < 4; i++) {
+			for (j = 0; j < 4; j++) {
+				if (game_map[by + j][bx + i] == EMPTY
+					&& blocks[b_type][b_rotation][j][i] == BLOCK) {
+					game_map[by + j][bx + i] = BLOCK;
+				}
+			}
+		}
 		break;
 	}
+}
+
+int check_crush(int bx, int by, int b_rotation) {
+	int i, j;
+	for (i = 0; i < 4; i++) {
+		for (j = 0; j < 4; j++) {
+			if (blocks[b_type][b_rotation][j][i] != EMPTY && game_map[by + j][bx + i] == WALL) return 0;
+		}
+	}
+	return 1;
 }
